@@ -7,6 +7,7 @@ import path from "path"
 import { readdir, rm } from "fs/promises"
 import { Filesystem } from "@/util/filesystem"
 import { Flock } from "@/util/flock"
+import { proxy, noproxy } from "@/util/network"
 import { Arborist } from "@npmcli/arborist"
 
 export namespace Npm {
@@ -68,6 +69,9 @@ export namespace Npm {
       progress: false,
       savePrefix: "",
       ignoreScripts: true,
+      proxy: proxy(),
+      httpsProxy: proxy(),
+      noProxy: noproxy(),
     })
     const tree = await arborist.loadVirtual().catch(() => {})
     if (tree) {
@@ -108,6 +112,9 @@ export namespace Npm {
         progress: false,
         savePrefix: "",
         ignoreScripts: true,
+        proxy: proxy(),
+        httpsProxy: proxy(),
+        noProxy: noproxy(),
       })
       await arb.reify().catch(() => {})
     }
