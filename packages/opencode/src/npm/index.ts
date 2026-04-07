@@ -9,6 +9,28 @@ import { Filesystem } from "@/util/filesystem"
 import { Flock } from "@/util/flock"
 import { Arborist } from "@npmcli/arborist"
 
+// Sanitize proxy environment variables to prevent Bun fetch errors
+// Bun's native fetch throws "proxy.url must be a non-empty string" when proxy env vars are empty
+// This happens on Windows with disabled proxies or when env vars are explicitly set to ""
+// Fixes: https://github.com/anomalyco/opencode/issues/21098
+// Fixes: https://github.com/anomalyco/opencode/issues/21327
+const PROXY_KEYS = [
+  "HTTP_PROXY",
+  "http_proxy",
+  "HTTPS_PROXY",
+  "https_proxy",
+  "ALL_PROXY",
+  "all_proxy",
+  "NO_PROXY",
+  "no_proxy",
+]
+for (const key of PROXY_KEYS) {
+  const val = process.env[key]
+  if (val !== undefined && val.trim() === "") {
+    delete process.env[key]
+  }
+}
+
 export namespace Npm {
   const log = Log.create({ service: "npm" })
 
