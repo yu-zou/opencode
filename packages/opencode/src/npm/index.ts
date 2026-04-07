@@ -9,6 +9,24 @@ import { Filesystem } from "@/util/filesystem"
 import { Flock } from "@/util/flock"
 import { Arborist } from "@npmcli/arborist"
 
+// Bun's fetch expects proxy.url as string but @npmcli/agent returns a URL object (#21098)
+try {
+  const url = require.resolve("@npmcli/agent", { paths: [require.resolve("@npmcli/arborist")] })
+  const mod = require(url)
+  const desc = Object.getOwnPropertyDescriptor(mod.Agent.prototype, "proxy")
+  if (desc?.get) {
+    const orig = desc.get
+    Object.defineProperty(mod.Agent.prototype, "proxy", {
+      ...desc,
+      get() {
+        const val = orig.call(this)
+        if (val.url && typeof val.url !== "string") return { ...val, url: String(val.url) }
+        return val
+      },
+    })
+  }
+} catch {}
+
 export namespace Npm {
   const log = Log.create({ service: "npm" })
 
