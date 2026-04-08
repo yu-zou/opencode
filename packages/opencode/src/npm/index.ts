@@ -29,6 +29,7 @@ try {
 
 export namespace Npm {
   const log = Log.create({ service: "npm" })
+  const illegal = process.platform === "win32" ? new Set(["<", ">", ":", '"', "|", "?", "*"]) : undefined
 
   export const InstallFailedError = NamedError.create(
     "NpmInstallFailedError",
@@ -37,8 +38,13 @@ export namespace Npm {
     }),
   )
 
+  export function sanitize(pkg: string) {
+    if (!illegal) return pkg
+    return Array.from(pkg, (char) => (illegal.has(char) || char.charCodeAt(0) < 32 ? "_" : char)).join("")
+  }
+
   function directory(pkg: string) {
-    return path.join(Global.Path.cache, "packages", pkg)
+    return path.join(Global.Path.cache, "packages", sanitize(pkg))
   }
 
   function resolveEntryPoint(name: string, dir: string) {
